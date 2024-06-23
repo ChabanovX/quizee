@@ -4,6 +4,7 @@ from datetime import datetime, UTC
 # Topic -> Quiz
 # Quiz
 
+
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     naming = db.Column(db.String(80), nullable=False, unique=True)

@@ -5,3 +5,4 @@ __pycache__/
 test.py
 instance/
 .DS_Store
+mydatabase.db
