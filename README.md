@@ -1,8 +1,3 @@
-# quizee backend
-
-
-
-## Getting started
 
 # Install dependencies: 
 
