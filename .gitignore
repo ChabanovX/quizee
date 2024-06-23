@@ -2,5 +2,6 @@ env/
 __pycache__/
 .vscode/
 .idea/
+test.py
 instance/
 .DS_Store

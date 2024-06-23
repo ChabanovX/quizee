@@ -8,6 +8,32 @@ def main_page():
     return "<h1>Welcome to the Quizee backend!</h1>"
 
 
+@app.route("/quizzes", methods=["GET"])
+def get_quizzes():
+    quizzes = Quiz.query.all()
+    json_quizzes = list(map(lambda x: x.to_json(), quizzes))
+
+    return jsonify({"topics": json_quizzes}), 200
+
+
+@app.route("/create_quiz", methods=["POST"])
+def create_quiz():
+    # Quiz has questions. Each question has answers. Some questions are multiple choice.
+    naming = request.json.get("naming")
+
+    if not naming:
+        return jsonify({"message": "You must inclide naming."}), 400,
+
+    new_quiz = Quiz(naming=naming)
+    try:
+        db.session.add(new_quiz)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 400
+    
+    return jsonify({"message": "Quiz created."}), 201
+
+
 @app.route("/users", methods=["GET"])
 def get_users():
     users = User.query.all()
@@ -58,32 +84,6 @@ def create_topic():
         return jsonify({"message": str(e)}), 400
     
     return jsonify({"message": "Topic created."}), 201
-
-
-@app.route("/quizzes", methods=["GET"])
-def get_quizzes():
-    quizzes = Quiz.query.all()
-    json_quizzes = list(map(lambda x: x.to_json(), quizzes))
-
-    return jsonify({"topics": json_quizzes}), 200
-
-
-@app.route("/create_quiz", methods=["POST"])
-def create_quiz():
-    naming = request.json.get("naming")
-
-    if not naming:
-        return jsonify({"message": "You must inclide naming."}), 400,
-
-    new_quiz = Quiz(naming=naming)
-    try:
-        db.session.add(new_quiz)
-        db.session.commit()
-    except Exception as e:
-        return jsonify({"message": str(e)}), 400
-    
-    return jsonify({"message": "Quiz created."}), 201
-
 
 if __name__ == "__main__":
     with app.app_context():

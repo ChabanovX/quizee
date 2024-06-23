@@ -4,6 +4,20 @@ from datetime import datetime, UTC
 # Topic -> Quiz
 # Quiz
 
+class Quiz(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    naming = db.Column(db.String(80), nullable=False, unique=True)
+    topic_id = db.Column(db.Integer, db.ForeignKey("topic.id"), nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<Quiz: {self.naming}>"
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "naming": self.naming
+        }
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,16 +50,3 @@ class Topic(db.Model):
             "id": self.id,
             "naming": self.naming
         }
-
-
-class Quiz(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    naming = db.Column(db.String(80), nullable=False, unique=True)
-    topic_id = db.Column(db.Integer, db.ForeignKey("topic.id"), nullable=True)
-
-    def to_json(self):
-        return {
-            "id": self.id,
-            "naming": self.naming
-        }
-
