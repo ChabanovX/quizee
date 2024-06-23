@@ -6,3 +6,5 @@ test.py
 instance/
 .DS_Store
 mydatabase.db
+alembic.ini
+alembic/

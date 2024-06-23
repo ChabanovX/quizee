@@ -1,12 +1,48 @@
 from flask import request, jsonify
 from config import app, db
-from models import User, Topic, Quiz
+from models import User, Topic, Quiz, Question, Answer
 
 
 @app.route("/")
 def main_page():
     return "<h1>Welcome to the Quizee backend!</h1>"
 
+
+@app.route("/create_answer", methods=["POST"])
+def create_answer():
+    text = request.json.get("text")
+    is_correct = request.json.get("is_correct")
+
+    if not text or not is_correct:
+        return jsonify({"message": "You must inclide text and is_correct."}), 400,
+
+    new_answer = Answer(text=text, is_correct=is_correct)
+    try:
+        db.session.add(new_answer)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 400
+
+    return jsonify({"message": "Answer created."}), 201
+
+
+@app.route("/create_question", methods=["POST"])
+def create_question():
+    text = request.json.get("text")
+    answers = request.json.get("answers")
+
+    if not text or not answers:
+        return jsonify({"message": "You must inclide text and answers."}), 400,
+
+    new_question = Question(text=text, answers=answers)
+    try:
+        db.session.add(new_question)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 400
+    
+    return jsonify({"message": "Question created."}), 201
+    
 
 @app.route("/quizzes", methods=["GET"])
 def get_quizzes():

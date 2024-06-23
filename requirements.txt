@@ -10,3 +10,4 @@ SQLAlchemy==2.0.30
 typing_extensions==4.12.2
 urllib3==2.2.2
 Werkzeug==3.0.3
+# alembic==1.13.1

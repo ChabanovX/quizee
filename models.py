@@ -1,14 +1,42 @@
 from config import db
 from datetime import datetime, UTC
-# User
-# Topic -> Quiz
-# Quiz
 
+class Answer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(80), nullable=False)
+    is_correct = db.Column(db.Boolean, nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey("question.id"), nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<Answer: {self.text}. Is correct: {self.is_correct}>"
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "text": self.text
+        }
+
+class Question(db.Model):
+    # Question has a text and answers. Some answers are correct and some are wrong
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(800), nullable=False)
+    answers = db.relationship("Answer", backref="question")
+    quiz_id = db.Column(db.Integer, db.ForeignKey("quiz.id"), nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<Question: {self.text}>"
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "text": self.text
+        }
 
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     naming = db.Column(db.String(80), nullable=False, unique=True)
-    topic_id = db.Column(db.Integer, db.ForeignKey("topic.id"), nullable=True)
+    questions = db.relationship("Question", backref="quiz")
+    topic_id = db.Column(db.Integer, db.ForeignKey("topic.id"))
 
     def __repr__(self) -> str:
         return f"<Quiz: {self.naming}>"
@@ -26,7 +54,7 @@ class User(db.Model):
     username = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(50), nullable=False)  # hash of password
     creation_date = db.Column(db.Date, default=datetime.now(UTC))
-    # Statistics
+    # Statistics TODO
     
     def to_json(self):
         return {
