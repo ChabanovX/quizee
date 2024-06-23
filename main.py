@@ -38,27 +38,13 @@ def get_answers():
 
 @app.route("/create_question", methods=["POST"])
 def create_question():
-    """Json example:
-{
-    "text": "What is the capital of France?",
-    "answers": [
-        {
-            "text": "Paris",
-            "is_correct": true
-        },
-        {
-            "text": "London",
-            "is_correct": false
-        },
-    ]
-}
-"""
     text = request.json.get("text")
     answers = request.json.get("answers")
 
     if not text or not answers:
         return jsonify({"message": "You must inclide text and answers."}), 400,
 
+    # Answer should follow JSON format of an answer.
     answers = list(map(lambda x: Answer(text=x["text"], is_correct=x["is_correct"]), json.loads(answers)))
     new_question = Question(text=text, answers=answers)
 
@@ -70,6 +56,23 @@ def create_question():
     
     return jsonify({"message": "Question created."}), 201
     
+
+@app.route("/create_quiz", methods=["POST"])
+def create_quiz():
+    naming = request.json.get("naming")
+
+    if not naming:
+        return jsonify({"message": "You must inclide naming."}), 400,
+
+    new_quiz = Quiz(naming=naming)
+    try:
+        db.session.add(new_quiz)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 400
+    
+    return jsonify({"message": "Quiz created."}), 201
+
 
 @app.route("/questions", methods=["GET"])
 def get_questions():
@@ -159,10 +162,5 @@ def create_topic():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-        # some_topic = Topic(naming="Narcotics")
-        # quiz1 = Quiz(naming="Woman with a headache", topic=some_topic)
-        # print(quiz1.topic)
-        # db.session.add_all([some_topic, quiz1])
-        # db.session.commit()
 
     app.run(debug=True)
