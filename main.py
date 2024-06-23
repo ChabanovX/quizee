@@ -2,6 +2,8 @@ from flask import request, jsonify
 from config import app, db
 from models import User, Topic, Quiz, Question, Answer
 
+import json
+
 
 @app.route("/")
 def main_page():
@@ -21,35 +23,68 @@ def create_answer():
         db.session.add(new_answer)
         db.session.commit()
     except Exception as e:
-        return jsonify({"message": str(e)}), 400
+        return jsonify({"message": str(e)}), 500
 
     return jsonify({"message": "Answer created."}), 201
 
 
+@app.route("/answers", methods=["GET"])
+def get_answers():
+    answers = Answer.query.all()
+    json_answers = list(map(lambda x: x.to_json(), answers))
+
+    return jsonify({"answers": json_answers})
+
+
 @app.route("/create_question", methods=["POST"])
 def create_question():
+    """Json example:
+{
+    "text": "What is the capital of France?",
+    "answers": [
+        {
+            "text": "Paris",
+            "is_correct": true
+        },
+        {
+            "text": "London",
+            "is_correct": false
+        },
+    ]
+}
+"""
     text = request.json.get("text")
     answers = request.json.get("answers")
 
     if not text or not answers:
         return jsonify({"message": "You must inclide text and answers."}), 400,
 
+    answers = list(map(lambda x: Answer(text=x["text"], is_correct=x["is_correct"]), json.loads(answers)))
     new_question = Question(text=text, answers=answers)
+
     try:
         db.session.add(new_question)
         db.session.commit()
     except Exception as e:
-        return jsonify({"message": str(e)}), 400
+        return jsonify({"message": str(e)}), 500
     
     return jsonify({"message": "Question created."}), 201
     
+
+@app.route("/questions", methods=["GET"])
+def get_questions():
+    questions = Question.query.all()
+    json_questions = list(map(lambda x: x.to_json(), questions))
+
+    return jsonify({"questions": json_questions})
+
 
 @app.route("/quizzes", methods=["GET"])
 def get_quizzes():
     quizzes = Quiz.query.all()
     json_quizzes = list(map(lambda x: x.to_json(), quizzes))
 
-    return jsonify({"topics": json_quizzes}), 200
+    return jsonify({"topics": json_quizzes})
 
 
 @app.route("/create_quiz", methods=["POST"])
@@ -75,7 +110,7 @@ def get_users():
     users = User.query.all()
     json_users = list(map(lambda x: x.to_json(), users))
 
-    return jsonify({"users": json_users}), 200
+    return jsonify({"users": json_users})
 
 
 @app.route("/create_user", methods=["POST"])

@@ -13,7 +13,8 @@ class Answer(db.Model):
     def to_json(self):
         return {
             "id": self.id,
-            "text": self.text
+            "text": self.text,
+            "is_correct": self.is_correct
         }
 
 class Question(db.Model):
@@ -29,7 +30,8 @@ class Question(db.Model):
     def to_json(self):
         return {
             "id": self.id,
-            "text": self.text
+            "text": self.text,
+            "answers": [answer.to_json() for answer in self.answers]
         }
 
 class Quiz(db.Model):
