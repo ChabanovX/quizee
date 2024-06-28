@@ -46,7 +46,8 @@ class Quiz(db.Model):
     def to_json(self):
         return {
             "id": self.id,
-            "naming": self.naming
+            "naming": self.naming,
+            "questions": [question.to_json() for question in self.questions]
         }
 
 
@@ -56,7 +57,8 @@ class User(db.Model):
     username = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(50), nullable=False)  # hash of password
     creation_date = db.Column(db.Date, default=datetime.now(UTC))
-    # Statistics TODO
+    
+    # TODO Statistics
     
     def to_json(self):
         return {
@@ -81,3 +83,10 @@ class Topic(db.Model):
             "id": self.id,
             "naming": self.naming
         }
+
+instances = {"users": User,
+             "topics": Topic,
+             "quizzes": Quiz,
+             "questions": Question,
+             "answers": Answer}
+

@@ -2,6 +2,7 @@ from flask import request, jsonify
 from config import app, db
 from models import User, Topic, Quiz, Question, Answer
 
+import models
 import json
 
 
@@ -10,30 +11,43 @@ def main_page():
     return "<h1>Welcome to the Quizee backend!</h1>"
 
 
-@app.route("/create_answer", methods=["POST"])
-def create_answer():
-    text = request.json.get("text")
-    is_correct = request.json.get("is_correct")
+@app.route("/<instance_name>", methods=["GET"])
+def get_all_instances(instance_name):
+    if instance_name not in models.instances:
+        return jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400
+    else:
+        return jsonify({instance_name: [x.to_json() for x in models.instances[instance_name].query.all()]})
 
-    if not text or not is_correct:
-        return jsonify({"message": "You must inclide text and is_correct."}), 400,
 
-    new_answer = Answer(text=text, is_correct=is_correct)
+@app.route("/<instance_name>/<int:id>")
+def get_instance_by_id(instance_name, id):
+    if instance_name not in models.instances:
+        return jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400
+    
+    instance = models.instances[instance_name].query.get(id)
+
+    if not instance:
+        return jsonify({"message": f"{instance_name}_{id} not found."}), 404
+    
+    return jsonify(instance.to_json())
+
+
+@app.route("/<instance_name>/<int:id>", methods=["DELETE"])
+def delete_instance_by_id(instance_name, id):
+    if instance_name not in models.instances:
+        return jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400
+    
+    instance = models.instances[instance_name].query.get(id)
+    if not instance:
+        return jsonify({"message": "Instance not found."}), 404
+    
     try:
-        db.session.add(new_answer)
+        db.session.delete(instance)
         db.session.commit()
     except Exception as e:
-        return jsonify({"message": str(e)}), 500
-
-    return jsonify({"message": "Answer created."}), 201
-
-
-@app.route("/answers", methods=["GET"])
-def get_answers():
-    answers = Answer.query.all()
-    json_answers = list(map(lambda x: x.to_json(), answers))
-
-    return jsonify({"answers": json_answers})
+        return jsonify({"message": str(e)}), 400
+    
+    return jsonify({"message": f"{instance_name}_{id} deleted."}), 200
 
 
 @app.route("/create_question", methods=["POST"])
@@ -41,30 +55,60 @@ def create_question():
     text = request.json.get("text")
     answers = request.json.get("answers")
 
-    if not text or not answers:
-        return jsonify({"message": "You must inclide text and answers."}), 400,
+    if not text:
+        return jsonify({"message": "You must inclide text."}), 400,
 
     # Answer should follow JSON format of an answer.
-    answers = list(map(lambda x: Answer(text=x["text"], is_correct=x["is_correct"]), json.loads(answers)))
+    answers = [Answer(text=x["text"], is_correct=x["is_correct"]) for x in json.loads(answers)]
     new_question = Question(text=text, answers=answers)
 
     try:
         db.session.add(new_question)
         db.session.commit()
     except Exception as e:
+        db.session.rollback()
         return jsonify({"message": str(e)}), 500
     
     return jsonify({"message": "Question created."}), 201
+
+
+@app.route("/update_question/<int:question_id>", methods=["POST"])
+def update_question(question_id):
+    question = Question.query.get(question_id)
+
+    if not question:
+        return jsonify({"message": "Question not found."}), 404
     
+    data = request.json
+    question.text = data.get("text", question.text)
+    question.answers = data.get("answers", question.answers)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 400
+    
+    return jsonify({"message": "Question updated."}), 200
+
 
 @app.route("/create_quiz", methods=["POST"])
 def create_quiz():
     naming = request.json.get("naming")
+    questions = request.json.get("questions")
 
-    if not naming:
-        return jsonify({"message": "You must inclide naming."}), 400,
+    if not naming or not questions:
+        return jsonify({"message": "You must inclide naming and questions"}), 400,
 
-    new_quiz = Quiz(naming=naming)
+    # Now we should create real instances of questions and answers.
+    question_instances = []
+    for question in questions:
+        answer_instances = []
+        for answer in question["answers"]:
+            answer_instances.append(Answer(text=answer["text"], is_correct=answer["is_correct"]))
+        
+        question_instances.append(Question(text=question["text"], answers=answer_instances))
+
+    new_quiz = Quiz(naming=naming, questions=question_instances)
     try:
         db.session.add(new_quiz)
         db.session.commit()
@@ -73,91 +117,6 @@ def create_quiz():
     
     return jsonify({"message": "Quiz created."}), 201
 
-
-@app.route("/questions", methods=["GET"])
-def get_questions():
-    questions = Question.query.all()
-    json_questions = list(map(lambda x: x.to_json(), questions))
-
-    return jsonify({"questions": json_questions})
-
-
-@app.route("/quizzes", methods=["GET"])
-def get_quizzes():
-    quizzes = Quiz.query.all()
-    json_quizzes = list(map(lambda x: x.to_json(), quizzes))
-
-    return jsonify({"topics": json_quizzes})
-
-
-@app.route("/create_quiz", methods=["POST"])
-def create_quiz():
-    # Quiz has questions. Each question has answers. Some questions are multiple choice.
-    naming = request.json.get("naming")
-
-    if not naming:
-        return jsonify({"message": "You must inclide naming."}), 400,
-
-    new_quiz = Quiz(naming=naming)
-    try:
-        db.session.add(new_quiz)
-        db.session.commit()
-    except Exception as e:
-        return jsonify({"message": str(e)}), 400
-    
-    return jsonify({"message": "Quiz created."}), 201
-
-
-@app.route("/users", methods=["GET"])
-def get_users():
-    users = User.query.all()
-    json_users = list(map(lambda x: x.to_json(), users))
-
-    return jsonify({"users": json_users})
-
-
-@app.route("/create_user", methods=["POST"])
-def create_user():
-    email = request.json.get("email")
-    username = request.json.get("username")
-    password = request.json.get("password")
-
-    if not username or not email:
-        return jsonify({"message": "You must inclide username and email."}), 400,
-
-    new_user = User(username=username, password=password, email=email)
-    try:
-        db.session.add(new_user)
-        db.session.commit()
-    except Exception as e:
-        return jsonify({"message": str(e)}), 400
-    
-    return jsonify({"message": "User created."}), 201
-
-
-@app.route("/topics", methods=["GET"])
-def get_topics():
-    topics = Topic.query.all()
-    json_topics = list(map(lambda x: x.to_json(), topics))
-
-    return jsonify({"topics": json_topics}), 200
-
-
-@app.route("/create_topic", methods=["POST"])
-def create_topic():
-    naming = request.json.get("naming")
-
-    if not naming:
-        return jsonify({"message": "You must inclide naming."}), 400,
-
-    new_topic = Topic(naming=naming)
-    try:
-        db.session.add(new_topic)
-        db.session.commit()
-    except Exception as e:
-        return jsonify({"message": str(e)}), 400
-    
-    return jsonify({"message": "Topic created."}), 201
 
 if __name__ == "__main__":
     with app.app_context():
