@@ -1,6 +1,9 @@
 from flask import request, jsonify
-from config import app, db
+from config import app, db, jwt
 from models import User, Topic, Quiz, Question, Answer
+
+from flask_jwt_extended import jwt_required, create_access_token, jwt_required, get_jwt_identity
+from werkzeug.security import generate_password_hash, check_password_hash
 
 import models
 import json
@@ -9,6 +12,51 @@ import json
 @app.route("/")
 def main_page():
     return "<h1>Welcome to the Quizee backend!</h1>"
+
+
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.json 
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+
+    if not username or not email or not password:
+        return jsonify({"message": "You must inclide username, email and password."}), 400
+    
+    if User.query.filter_by(email=email).first():
+        return jsonify({"message": "Email already in use."}), 400
+    
+    if User.query.filter_by(username=username).first():
+        return jsonify({"message": "Username already in use."}), 400
+    
+    new_user = User(username=username, email=email, password=generate_password_hash(password))
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": str(e)}), 500
+    
+    return jsonify({"message": "User created."}), 201
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"message": "You must inclide username and password."}), 400
+    
+    user = User.query.filter_by(username=username).first()
+
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({"message": "Invalid credentials."}), 401
+    
+    access_token = create_access_token(identity=user.id)
+    return jsonify({"message": "Login successful.", "access_token": access_token})
 
 
 @app.route("/<instance_name>", methods=["GET"])
@@ -24,7 +72,8 @@ def get_instance_by_id(instance_name, id):
     if instance_name not in models.instances:
         return jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400
     
-    instance = models.instances[instance_name].query.get(id)
+    # instance = models.instances[instance_name].query.get(id) Legacy
+    instance = db.session.get(models.instances[instance_name], id)
 
     if not instance:
         return jsonify({"message": f"{instance_name}_{id} not found."}), 404
@@ -37,7 +86,7 @@ def delete_instance_by_id(instance_name, id):
     if instance_name not in models.instances:
         return jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400
     
-    instance = models.instances[instance_name].query.get(id)
+    instance = db.session.get(models.instances[instance_name], id)
     if not instance:
         return jsonify({"message": "Instance not found."}), 404
     
@@ -75,7 +124,7 @@ def create_question():
 
 @app.route("/update_question/<int:question_id>", methods=["POST"])
 def update_question(question_id):
-    question = Question.query.get(question_id)
+    question = db.session.get(Question, question_id)
 
     if not question:
         return jsonify({"message": "Question not found."}), 404
