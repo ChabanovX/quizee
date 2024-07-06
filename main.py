@@ -104,10 +104,13 @@ def create_quiz():
     question_instances = []
     for question in questions:
         answer_instances = []
-        for answer in question["answers"]:
-            answer_instances.append(Answer(text=answer["text"], is_correct=answer["is_correct"]))
-        
-        question_instances.append(Question(text=question["text"], answers=answer_instances))
+
+        for answer in json.loads(question)["answers"]:
+            answer_dict = json.loads(answer)
+            answer_instances.append(Answer(text=answer_dict["text"], is_correct=answer_dict["is_correct"]))
+
+        question_dict = json.loads(question)
+        question_instances.append(Question(text=question_dict["text"], answers=answer_instances))
 
     new_quiz = Quiz(naming=naming, questions=question_instances)
     try:
