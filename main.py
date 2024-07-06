@@ -54,13 +54,14 @@ def delete_instance_by_id(instance_name, id):
 def create_question():
     text = request.json.get("text")
     answers = request.json.get("answers")
+    has_multiple_answers = request.json.get("hasMultipleAnswers")
 
-    if not text:
-        return jsonify({"message": "You must inclide text."}), 400,
+    if not text or not answers or not has_multiple_answers:
+        return jsonify({"message": "You must inclide all the info."}), 400,
 
     # Answer should follow JSON format of an answer.
     answers = [Answer(text=x["text"], is_correct=x["is_correct"]) for x in json.loads(answers)]
-    new_question = Question(text=text, answers=answers)
+    new_question = Question(text=text, answers=answers, )
 
     try:
         db.session.add(new_question)
@@ -123,3 +124,4 @@ if __name__ == "__main__":
         db.create_all()
 
     app.run(debug=True)
+    
