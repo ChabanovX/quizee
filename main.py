@@ -54,13 +54,14 @@ def delete_instance_by_id(instance_name, id):
 def create_question():
     text = request.json.get("text")
     answers = request.json.get("answers")
+    has_multiple_right_answers = request.json.get("hasMultipleRightAnswers")
 
-    if not text:
-        return jsonify({"message": "You must inclide text."}), 400,
+    if not text or not answers or not has_multiple_right_answers:
+        return jsonify({"message": "You must inclide all the info."}), 400,
 
     # Answer should follow JSON format of an answer.
     answers = [Answer(text=x["text"], is_correct=x["is_correct"]) for x in json.loads(answers)]
-    new_question = Question(text=text, answers=answers)
+    new_question = Question(text=text, answers=answers, has_multiple_right_answers=has_multiple_right_answers)
 
     try:
         db.session.add(new_question)
@@ -82,10 +83,12 @@ def update_question(question_id):
     data = request.json
     question.text = data.get("text", question.text)
     question.answers = data.get("answers", question.answers)
+    question.has_multiple_right_answers = data.get("hasMultipleRightAnswers", question.has_multiple_right_answers)
 
     try:
         db.session.commit()
     except Exception as e:
+        db.session.rollback()
         return jsonify({"message": str(e)}), 400
     
     return jsonify({"message": "Question updated."}), 200
@@ -104,18 +107,18 @@ def create_quiz():
     for question in questions:
         answer_instances = []
 
-        for answer in json.loads(question)["answers"]:
-            answer_dict = json.loads(answer)
-            answer_instances.append(Answer(text=answer_dict["text"], is_correct=answer_dict["is_correct"]))
+        for answer in question["answers"]:
+            answer_instances.append(Answer(text=answer["text"], is_correct=answer["is_correct"]))
 
-        question_dict = json.loads(question)
-        question_instances.append(Question(text=question_dict["text"], answers=answer_instances))
+        question_instances.append(Question(text=question["text"], answers=answer_instances,
+                                            has_multiple_right_answers=question["hasMultipleRightAnswers"]))
 
     new_quiz = Quiz(naming=naming, questions=question_instances)
     try:
         db.session.add(new_quiz)
         db.session.commit()
     except Exception as e:
+        db.session.rollback()
         return jsonify({"message": str(e)}), 400
     
     return jsonify({"message": "Quiz created."}), 201
@@ -126,3 +129,4 @@ if __name__ == "__main__":
         db.create_all()
 
     app.run(debug=True)
+    

@@ -22,6 +22,7 @@ class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(800), nullable=False)
     answers = db.relationship("Answer", backref="question")
+    has_multiple_right_answers = db.Column(db.Boolean, nullable=False)
     quiz_id = db.Column(db.Integer, db.ForeignKey("quiz.id"), nullable=True)
 
     def __repr__(self) -> str:
@@ -31,7 +32,8 @@ class Question(db.Model):
         return {
             "id": self.id,
             "text": self.text,
-            "answers": [answer.to_json() for answer in self.answers]
+            "answers": [answer.to_json() for answer in self.answers],
+            "hasMultipleRightAnswers": self.has_multiple_right_answers
         }
 
 class Quiz(db.Model):
