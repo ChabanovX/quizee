@@ -1,11 +1,13 @@
 from flask import request, jsonify
 from config import app, db, jwt
-from models import User, Topic, Quiz, Question, Answer
+from models import User, Topic, Quiz, Question, Answer # should not be there TODO:
 
-from flask_jwt_extended import jwt_required, create_access_token, jwt_required, get_jwt_identity
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import jwt_required, get_jwt_identity # needed for protected routes
 
 import models
+import utils.auth
+import utils.utils
+
 import json
 
 
@@ -16,26 +18,10 @@ def main_page():
 
 @app.route("/register", methods=["POST"])
 def register():
-    data = request.json 
-    username = data.get("username")
-    email = data.get("email")
-    password = data.get("password")
-
-    if not username or not email or not password:
-        return jsonify({"message": "You must inclide username, email and password."}), 400
-    
-    if User.query.filter_by(email=email).first():
-        return jsonify({"message": "Email already in use."}), 400
-    
-    if User.query.filter_by(username=username).first():
-        return jsonify({"message": "Username already in use."}), 400
-    
-    new_user = User(username=username, email=email, password=generate_password_hash(password))
     try:
-        db.session.add(new_user)
-        db.session.commit()
+        utils.auth.register(**request.get_json())
+
     except Exception as e:
-        db.session.rollback()
         return jsonify({"message": str(e)}), 500
     
     return jsonify({"message": "User created."}), 201
@@ -43,20 +29,13 @@ def register():
 
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.json
-    username = data.get("username")
-    password = data.get("password")
+    try:
+        token = utils.auth.login(**request.get_json())
 
-    if not username or not password:
-        return jsonify({"message": "You must inclide username and password."}), 400
-    
-    user = User.query.filter_by(username=username).first()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
-    if not user or not check_password_hash(user.password, password):
-        return jsonify({"message": "Invalid credentials."}), 401
-    
-    access_token = create_access_token(identity=user.id)
-    return jsonify({"message": "Login successful.", "access_token": access_token})
+    return jsonify({"message": "Login successful.", "access_token": token})
 
 
 @app.route("/<instance_name>", methods=["GET"])
