@@ -1,18 +1,41 @@
 stages:
-  - lint
+  - security
   - build
+
 
 variables:
   DOCKER_TLS_CERTDIR: "/certs"
   APP: "my-app"
 
-lint: 
-  stage: lint
+dependency_scanning:
+  allow_failure: true
+  stage: security
   image: python:3.9
   before_script:
-    - pip install flake8
-  script: 
-    - flake8 .
+    - pip install safety
+  script:
+    - safety check --full-report
+
+sast:
+  allow_failure: true
+  stage: security
+  image: python:3.9
+  before_script:
+    - pip install bandit
+  script:
+    - bandit -r .
+
+container_scanning:
+  allow_failure: true
+  stage: security
+  image: aquasec/trivy:latest
+  services:
+    - docker:24.0.5-dind
+  variables:
+    DOCKER_DRIVER: overlay2
+  script:
+    - trivy version
+    - trivy fs .
 
 
 build:
