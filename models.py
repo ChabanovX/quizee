@@ -85,10 +85,3 @@ class Topic(db.Model):
             "id": self.id,
             "naming": self.naming
         }
-
-instances = {"users": User,
-             "topics": Topic,
-             "quizzes": Quiz,
-             "questions": Question,
-             "answers": Answer}
-
