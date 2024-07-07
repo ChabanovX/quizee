@@ -11,4 +11,3 @@ typing_extensions==4.12.2
 urllib3==2.2.2
 Werkzeug==3.0.3
 Flask-JWT-Extended==4.6.0
-flake8==7.1.0 # Linter 
