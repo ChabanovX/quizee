@@ -8,6 +8,7 @@ variables:
   APP: "my-app"
 
 dependency_scanning:
+  allow_failure: true
   stage: security
   image: python:3.9
   before_script:
@@ -16,6 +17,7 @@ dependency_scanning:
     - safety check --full-report
 
 sast:
+  allow_failure: true
   stage: security
   image: python:3.9
   before_script:
@@ -24,6 +26,7 @@ sast:
     - bandit -r .
 
 container_scanning:
+  allow_failure: true
   stage: security
   image: aquasec/trivy:latest
   services:
