@@ -1,9 +1,19 @@
 stages:
+  - lint
   - build
 
 variables:
   DOCKER_TLS_CERTDIR: "/certs"
   APP: "my-app"
+
+lint: 
+  stage: lint
+  image: python:3.9
+  before_script:
+    - pip install flake8
+  script: 
+    - flake8 .
+
 
 build:
   stage: build
