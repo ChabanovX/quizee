@@ -6,6 +6,7 @@ test.py
 another_test.py
 instance/
 .DS_Store
+.history/
 mydatabase.db
 alembic.ini
 alembic/
