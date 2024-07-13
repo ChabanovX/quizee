@@ -1,9 +1,23 @@
-from config import db
+from config import db, api
 from models import User
 
 from flask_jwt_extended import create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError
+from flask_restx import fields
+
+
+# Register and login models
+register_model = api.model('Register', {
+    'email': fields.String(required=True),
+    'username': fields.String(required=True),
+    'password': fields.String(required=True)
+})
+
+login_model = api.model('Login', {
+    'username': fields.String(required=True),
+    'password': fields.String(required=True)
+})
 
 
 def register(email: str, username: str, password: str, **kwargs) -> None:

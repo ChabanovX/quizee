@@ -1,98 +1,107 @@
-from flask import request, jsonify
-from config import app, db
+from flask import request, jsonify, make_response
+from flask_restx import Resource
 
+from config import app, api, db
 import models
 import utils.auth
 import utils.utils
 
 
-@app.route("/")
-def main_page():
-    return "<h1>Welcome to the Quizee backend!</h1>"
+# API namespaces
+auth_ns = api.namespace("auth", description="Authentication related operations")
+quiz_ns = api.namespace("quiz", description="Quiz related operations")
+general_ns = api.namespace("general", description="General operations")
 
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
+@general_ns.route("/")
+class MainPage(Resource):
+    def get(self):
+        return "<h1>Welcome to the Quizee backend!</h1>", 200
+    
+
+@general_ns.route("/profile")
+class Profile(Resource):
+    @api.doc(security='Bearer Auth')
+    def get(self):
+        try:
+            profile_data = utils.utils.profile()
+            return make_response(jsonify({"profile": profile_data}), 200)
+        except Exception as e:
+            return make_response(jsonify({"message": str(e)}), 404)
+        
+
+from utils.auth import register_model, login_model
+
+
+@auth_ns.route("/register")
+class Register(Resource):
+    @auth_ns.expect(register_model)
+    def post(self):
         try:
             utils.auth.register(**request.get_json())
         except Exception as e:
-            return jsonify({"message": str(e)}), 500
+            return make_response(jsonify({"message": str(e)}), 500)
         
-        return jsonify({"message": "User created."}), 201
-    
-    return "<h1>Welcome to the Register Page!</h1>"
+        return make_response(jsonify({"message": "User created."}), 201)
 
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
+@auth_ns.route("/login")
+class Login(Resource):
+    @auth_ns.expect(login_model)
+    def post(self):
         try:
             token = utils.auth.login(**request.get_json())
         except Exception as e:
-            return jsonify({"message": str(e)}), 401
+            return make_response(jsonify({"message": str(e)}), 401)
 
-        return jsonify(access_token=token), 200
-
-    return "<h1>Welcome to the Login Page!</h1>"
+        return make_response(jsonify(access_token=token), 200)
 
 
-@app.route("/profile", methods=["GET"])
-def profile():
-    try:
-        return utils.utils.profile()
-    except Exception as e:
-        return jsonify({"message": str(e)}), 404
+@quiz_ns.route("/quizzes")
+class Quizzes(Resource):
+    @api.doc(security='Bearer Auth')
+    def get(self):
+        return make_response(utils.utils.get_quizzes(), 200)
 
 
-# Login required
-@app.route("/quizzes", methods=["GET"])
-def get_quizzes():
-    return jsonify(utils.utils.get_quizzes()), 200
+from utils.utils import quiz_model
 
 
 # Login required
-@app.route("/create_quiz", methods=["POST"])
-def create_quiz():
-    try:
-        utils.utils.create_quiz(**request.get_json())
-    except Exception as e:
-        print("Exception happened while creating quiz: ", e)
-        return jsonify({"message": str(e)}), 400
+@quiz_ns.route("/create_quiz")
+class CreateQuiz(Resource):
+    @quiz_ns.expect(quiz_model)
+    @api.doc(security='Bearer Auth')
+    def post(self):
+        try:
+            utils.utils.create_quiz(**request.get_json())
+        except Exception as e:
+            return make_response(jsonify({"message": str(e)}), 400)
+        
+        return make_response(jsonify({"message": "Quiz created."}), 201)
+
+
+# Login required
+@quiz_ns.route("/delete_quiz/<int:quiz_id>")
+class DeleteQuiz(Resource):
+    @api.doc(security='Bearer Auth')
+    def delete(self, quiz_id):
+        try:
+            utils.utils.delete_quiz(quiz_id)
+        except Exception as e:
+            return make_response(jsonify({"message": str(e)}), 400)
+        
+        return make_response(jsonify({"message": "Quiz deleted."}), 200)
     
-    return jsonify({"message": "Quiz created."}), 201
-
-
-# Login required
-@app.route("/delete_quiz/<int:quiz_id>", methods=["DELETE"])
-def delete_quiz(quiz_id):
-    try:
-        utils.utils.delete_quiz(quiz_id)
-    except Exception as e:
-        return jsonify({"message": str(e)}), 400
-    
-    return jsonify({"message": "Quiz deleted."}), 200
-
 
 # The next functions will be deleted probably.
-@app.route("/<instance_name>", methods=["GET"])
-def get_all_instances(instance_name):
-    if not getattr(models, instance_name, False):
-        return jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400
-    else:
-        return jsonify({instance_name: [x.to_json() for x in getattr(models, instance_name).query.all()]})
-
-
-@app.route("/<instance_name>/<int:id>")
-def get_instance_by_id(instance_name, id):
-    if not getattr(models, instance_name, False):
-        return jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400
-    
-    instance = db.session.get(getattr(models, instance_name), id)
-    if not instance:
-        return jsonify({"message": f"{instance_name}_{id} not found."}), 404
-    
-    return jsonify(instance.to_json())
+@general_ns.route("/<instance_name>")
+class GetAllInstances(Resource):
+    def get(self, instance_name):
+        if not getattr(models, instance_name, False):
+            return make_response(jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400)
+        else:
+            return make_response(jsonify({instance_name: [x.to_json() for x in getattr(models, instance_name).query.all()]}), 200)
 
 
 if __name__ == "__main__":

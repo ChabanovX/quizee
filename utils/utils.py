@@ -1,7 +1,26 @@
 from models import User, Quiz, Question, Answer
-from config import db
+from config import db, api
 
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_restx import fields
+
+
+# Quiz creation models
+answer_model = api.model('Answer', {
+    'text': fields.String(required=True, description='Answer text'),
+    'is_correct': fields.Boolean(required=True, description='Is the answer correct')
+})
+
+question_model = api.model('Question', {
+    'text': fields.String(required=True, description='Question text'),
+    'answers': fields.List(fields.Nested(answer_model), required=True, description='List of answers'),
+    'hasMultipleRightAnswers': fields.Boolean(required=True, description='Does the question have multiple correct answers')
+})
+
+quiz_model = api.model('Quiz', {
+    'naming': fields.String(required=True, description='Quiz name'),
+    'questions': fields.List(fields.Nested(question_model), required=True, description='List of questions')
+})
 
 
 @jwt_required()
