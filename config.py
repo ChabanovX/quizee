@@ -15,9 +15,9 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 api = Api(app, 
     doc="/swagger",
-    title='Quiz API',
+    title='Quizee API',
     version='1.0',
-    description='A simple Quiz API',
+    description='A simple Quizee API',
     authorizations={
         'Bearer Auth': {
             'type': 'apiKey',
