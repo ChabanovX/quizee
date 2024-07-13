@@ -13,11 +13,11 @@ app.config["JWT_SECRET_KEY"] = "super-secret-lol"
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
-api = Api(app, 
+api = Api(app,
     doc="/swagger",
     title='Quizee API',
     version='1.0',
-    description='A simple Quizee API',
+    description='API for Quizee WebApp',
     authorizations={
         'Bearer Auth': {
             'type': 'apiKey',
