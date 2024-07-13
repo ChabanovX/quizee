@@ -23,7 +23,7 @@ api = Api(app,
             'type': 'apiKey',
             'in': 'header',
             'name': 'Authorization',
-            'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+            'description': "Type in the '*Value*' input box below: **'Bearer &lt;JWT&gt;'**, where JWT is the token"
         }
     }
 )
