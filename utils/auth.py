@@ -1,18 +1,9 @@
-from config import db, login_manager
+from config import db
 from models import User
 
-from flask_login import login_user, logout_user, login_required
+from flask_jwt_extended import create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-
-@login_required
-def logout() -> None:
-    logout_user()
+from sqlalchemy.exc import IntegrityError
 
 
 def register(email: str, username: str, password: str, **kwargs) -> None:
@@ -26,10 +17,12 @@ def register(email: str, username: str, password: str, **kwargs) -> None:
         user = User(email=email, username=username, password=generate_password_hash(password))
         db.session.add(user)
         db.session.commit()
-
+    except IntegrityError:
+        db.session.rollback()
+        raise ValueError("Database integrity error")
     except Exception as e:
         db.session.rollback()
-        raise e
+        raise Exception(f"An error occurred: {e}")
 
 
 def login(username: str, password: str, **kwargs) -> str:
@@ -37,5 +30,6 @@ def login(username: str, password: str, **kwargs) -> str:
     if user is None or not check_password_hash(user.password, password):
         raise Exception("Invalid credentials.")
     
-    login_user(user)
+    access_token = create_access_token(identity=user.id)
+    return access_token
     

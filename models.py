@@ -1,6 +1,5 @@
 from config import db
 from datetime import datetime, UTC
-from flask_login import UserMixin
 
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -54,7 +53,7 @@ class Quiz(db.Model):
         }
 
 
-class User(db.Model, UserMixin):
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(80), nullable=False, unique=True)
     username = db.Column(db.String(50), nullable=False, unique=True)

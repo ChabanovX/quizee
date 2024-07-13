@@ -28,20 +28,21 @@ def register():
 def login():
     if request.method == "POST":
         try:
-            utils.auth.login(**request.get_json())
+            token = utils.auth.login(**request.get_json())
         except Exception as e:
             return jsonify({"message": str(e)}), 401
 
-        return jsonify({"message": "Login successful."}), 200
+        return jsonify(access_token=token), 200
 
     return "<h1>Welcome to the Login Page!</h1>"
 
 
-# Login required
-@app.route("/logout", methods=["GET"])
-def logout():
-    utils.auth.logout()
-    return jsonify({"message": "Logout successful."}), 200
+@app.route("/profile", methods=["GET"])
+def profile():
+    try:
+        return utils.utils.profile()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 404
 
 
 # Login required
@@ -74,7 +75,6 @@ def delete_quiz(quiz_id):
 
 
 # The next functions will be deleted probably.
-
 @app.route("/<instance_name>", methods=["GET"])
 def get_all_instances(instance_name):
     if not getattr(models, instance_name, False):
@@ -93,24 +93,6 @@ def get_instance_by_id(instance_name, id):
         return jsonify({"message": f"{instance_name}_{id} not found."}), 404
     
     return jsonify(instance.to_json())
-
-
-# @app.route("/<instance_name>/<int:id>", methods=["DELETE"])
-# def delete_instance_by_id(instance_name, id):
-#     if not getattr(models, instance_name, False):
-#         return jsonify({"message": "{} is not a valid instance.".format(instance_name)}), 400
-    
-#     instance = db.session.get(getattr(models, instance_name), id)
-#     if not instance:
-#         return jsonify({"message": "Instance not found."}), 404
-    
-#     try:
-#         db.session.delete(instance)
-#         db.session.commit()
-#     except Exception as e:
-#         return jsonify({"message": str(e)}), 400
-    
-#     return jsonify({"message": f"{instance_name}_{id} deleted."}), 200
 
 
 if __name__ == "__main__":
