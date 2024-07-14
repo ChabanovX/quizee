@@ -1,5 +1,8 @@
-from config import db
 from datetime import datetime, UTC
+from flask_restx import fields
+
+from config import db, api
+
 
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -16,6 +19,14 @@ class Answer(db.Model):
             "text": self.text,
             "is_correct": self.is_correct
         }
+    
+    @staticmethod
+    def to_api_model():
+        return api.model('Answer', {
+            'text': fields.String(required=True, description='Answer text'),
+            'is_correct': fields.Boolean(required=True, description='Is the answer correct')
+        })
+
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +45,15 @@ class Question(db.Model):
             "answers": [answer.to_json() for answer in self.answers],
             "hasMultipleRightAnswers": self.has_multiple_right_answers
         }
+    
+    @staticmethod
+    def to_api_model():
+        return api.model('Question', {
+            'text': fields.String(required=True, description='Question text'),
+            'answers': fields.List(fields.Nested(Answer.to_api_model()), required=True, description='List of answers'),
+            'hasMultipleRightAnswers': fields.Boolean(required=True, description='Does the question have multiple correct answers')
+        })
+
 
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -51,6 +71,13 @@ class Quiz(db.Model):
             "naming": self.naming,
             "questions": [question.to_json() for question in self.questions]
         }
+    
+    @staticmethod
+    def to_api_model():
+        return api.model('Quiz', {
+            'naming': fields.String(required=True, description='Quiz name'),
+            'questions': fields.List(fields.Nested(Question.to_api_model()), required=True, description='List of questions')
+        })
 
 
 class User(db.Model):
@@ -72,6 +99,21 @@ class User(db.Model):
     
     def __repr__(self) -> str:
         return f"<User: {self.username} with email: {self.email}>"
+    
+    @staticmethod
+    def to_api_model_register():
+        return api.model('User Register', {
+            'email': fields.String(required=True),
+            'username': fields.String(required=True),
+            'password': fields.String(required=True)
+        })
+    
+    @staticmethod
+    def to_api_model_login():
+        return api.model('User Login', {
+            'username': fields.String(required=True),
+            'password': fields.String(required=True)
+        })
 
 
 class Topic(db.Model):

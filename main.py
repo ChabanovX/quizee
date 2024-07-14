@@ -2,9 +2,9 @@ from flask import request, jsonify, make_response
 from flask_restx import Resource
 
 from config import app, api, db
-import models
-import utils.auth
 import utils.utils
+import utils.auth
+import models
 
 
 # API namespaces
@@ -28,14 +28,11 @@ class Profile(Resource):
             return make_response(jsonify({"profile": profile_data}), 200)
         except Exception as e:
             return make_response(jsonify({"message": str(e)}), 404)
-        
-
-from utils.auth import register_model, login_model
 
 
 @auth_ns.route("/register")
 class Register(Resource):
-    @auth_ns.expect(register_model)
+    @auth_ns.expect(models.User.to_api_model_register())
     def post(self):
         try:
             utils.auth.register(**request.get_json())
@@ -47,7 +44,7 @@ class Register(Resource):
 
 @auth_ns.route("/login")
 class Login(Resource):
-    @auth_ns.expect(login_model)
+    @auth_ns.expect(models.User.to_api_model_login())
     def post(self):
         try:
             token = utils.auth.login(**request.get_json())
@@ -64,13 +61,9 @@ class Quizzes(Resource):
         return make_response(utils.utils.get_quizzes(), 200)
 
 
-from utils.utils import quiz_model
-
-
-# Login required
 @quiz_ns.route("/create_quiz")
 class CreateQuiz(Resource):
-    @quiz_ns.expect(quiz_model)
+    @quiz_ns.expect(models.Quiz.to_api_model())
     @api.doc(security='Bearer Auth')
     def post(self):
         try:
@@ -81,7 +74,6 @@ class CreateQuiz(Resource):
         return make_response(jsonify({"message": "Quiz created."}), 201)
 
 
-# Login required
 @quiz_ns.route("/delete_quiz/<int:quiz_id>")
 class DeleteQuiz(Resource):
     @api.doc(security='Bearer Auth')
@@ -94,7 +86,7 @@ class DeleteQuiz(Resource):
         return make_response(jsonify({"message": "Quiz deleted."}), 200)
     
 
-# The next functions will be deleted probably.
+# Not safe. Should be used only for testing
 @general_ns.route("/<instance_name>")
 class GetAllInstances(Resource):
     def get(self, instance_name):
