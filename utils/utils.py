@@ -1,7 +1,8 @@
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from sqlalchemy.orm.exc import UnmappedInstanceError
+
 from models import User, Quiz, Question, Answer
 from config import db
-
-from flask_jwt_extended import get_jwt_identity, jwt_required
 
 
 @jwt_required()
@@ -21,26 +22,26 @@ def get_quizzes() -> list:
 
 
 @jwt_required()
-def create_quiz(naming: str, questions: list) -> None:
+def create_quiz(quizTitle: str, questions: list) -> None:
     current_user = get_jwt_identity()
     question_instances = []
 
     for question in questions:
         answer_instances = [
-            Answer(text=answer["text"], is_correct=answer["is_correct"])
+            Answer(answer_text=answer["answerText"], is_correct=answer["isCorrect"])
             for answer in question["answers"]
         ]
 
         question_instances.append(
             Question(
-                text=question["text"],
+                question_text=question["questionText"],
                 answers=answer_instances,
                 has_multiple_right_answers=question["hasMultipleRightAnswers"],
                 quiz_id=None
             )
         )
 
-    new_quiz = Quiz(naming=naming, questions=question_instances, user_id=current_user)
+    new_quiz = Quiz(quiz_title=quizTitle, questions=question_instances, user_id=current_user)
 
     # We still need to set quiz_id in questions (MAYBE)
     for question in new_quiz.questions:
@@ -60,6 +61,9 @@ def delete_quiz(quiz_id: int) -> None:
         quiz = Quiz.query.filter_by(id=quiz_id, user_id=current_user).first()
         db.session.delete(quiz)
         db.session.commit()
+    except UnmappedInstanceError:
+        db.session.rollback()
+        raise Exception("Quiz with this id was not found.")
     except Exception as e:
         db.session.rollback()
-        raise e
+        raise e 
