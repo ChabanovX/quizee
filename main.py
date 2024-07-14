@@ -17,7 +17,7 @@ general_ns = api.namespace("general", description="General operations")
 class MainPage(Resource):
     def get(self):
         return "<h1>Welcome to the Quizee backend!</h1>", 200
-    
+
 
 @general_ns.route("/profile")
 class Profile(Resource):
@@ -38,7 +38,7 @@ class Register(Resource):
             utils.auth.register(**request.get_json())
         except Exception as e:
             return make_response(jsonify({"message": str(e)}), 500)
-        
+
         return make_response(jsonify({"message": "User created."}), 201)
 
 
@@ -70,7 +70,7 @@ class CreateQuiz(Resource):
             utils.utils.create_quiz(**request.get_json())
         except Exception as e:
             return make_response(jsonify({"message": str(e)}), 400)
-        
+
         return make_response(jsonify({"message": "Quiz created."}), 201)
 
 
@@ -82,9 +82,9 @@ class DeleteQuiz(Resource):
             utils.utils.delete_quiz(quiz_id)
         except Exception as e:
             return make_response(jsonify({"message": str(e)}), 400)
-        
+
         return make_response(jsonify({"message": "Quiz deleted."}), 200)
-    
+
 
 # Not safe. Should be used only for testing
 @general_ns.route("/<instance_name>")
@@ -101,4 +101,3 @@ if __name__ == "__main__":
         db.create_all()
 
     app.run(debug=True)
-    
