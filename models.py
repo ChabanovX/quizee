@@ -1,5 +1,6 @@
-from datetime import datetime, UTC
 from flask_restx import fields
+
+from datetime import datetime, UTC
 
 from config import db, api
 
@@ -94,6 +95,7 @@ class User(db.Model):
             "email": self.email,
             "username": self.username,
             "password": self.password,
+            "quizzes": [quiz.to_json() for quiz in self.quizzes],
             "creationDate": self.creation_date
         }
     
