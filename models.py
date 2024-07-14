@@ -1,6 +1,6 @@
 from flask_restx import fields
 
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from config import db, api
 
@@ -86,7 +86,7 @@ class User(db.Model):
     email = db.Column(db.String(80), nullable=False, unique=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
-    creation_date = db.Column(db.DateTime, default=datetime.now(UTC))
+    creation_date = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     quizzes = db.relationship("Quiz", backref="user")
     
     def to_json(self):
