@@ -1,7 +1,7 @@
 # Quizee API
 
 ## Project Description
-Quizee is a backend API for creating and managing quizzes. This API allows users to register, log in, and manage their quizzes securely using JWT authentication. The project is built using Flask, Flask-RESTX, and SQLAlchemy, providing a robust framework for developing and maintaining the application.
+This is a backend API for creating and managing quizzes. This API allows users to register, log in, and manage their quizzes securely using JWT authentication. The project is built using Flask, Flask-RESTX, and SQLAlchemy, providing a robust framework for developing and maintaining the application.
 
 ## Feature List
 - **User Authentication**: Secure user registration and login using JWT tokens.
@@ -13,14 +13,11 @@ Quizee is a backend API for creating and managing quizzes. This API allows users
 ## Demo
 Screenshots of the API in action:
 
-1. **Swagger UI**:
-   ![Swagger UI](https://your-image-link.com/swagger-ui.png)
-
-2. **Postman Example**:
-   ![Postman Example](https://your-image-link.com/postman-example.png)
+**Swagger UI**:
+![Swagger UI](https://your-image-link.com/swagger-ui.png)
 
 ## Live Demo
-Check out the live version of the Quizee API [here](https://your-deployed-link.com).
+Check out the live version of the Quizee [here](https://drive.google.com/file/d/1wJ5IRnerl_Ti9Pl26eQNZWYqRVSz2UaZ/view?usp=sharing).
 
 ## Usage Instructions
 ### User Guide
@@ -55,3 +52,7 @@ Check out the live version of the Quizee API [here](https://your-deployed-link.c
    ```bash
    git clone https://your-repo-link.com
    cd your-repo
+   ```
+2. **Install Dependencies**
+xxx
+
