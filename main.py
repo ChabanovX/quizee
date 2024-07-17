@@ -58,7 +58,10 @@ class Login(Resource):
 class Quizzes(Resource):
     @api.doc(security='Bearer Auth')
     def get(self):
-        return make_response(utils.utils.get_quizzes(), 200)
+        try:
+            return make_response(utils.utils.get_quizzes(), 200)
+        except Exception as e:
+            return make_response(jsonify({"message": str(e)}), 400)
 
 
 @quiz_ns.route("/create")
