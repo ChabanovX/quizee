@@ -54,14 +54,14 @@ class Login(Resource):
         return make_response(jsonify(access_token=token), 200)
 
 
-@quiz_ns.route("/quizzes")
+@quiz_ns.route("/get")
 class Quizzes(Resource):
     @api.doc(security='Bearer Auth')
     def get(self):
         return make_response(utils.utils.get_quizzes(), 200)
 
 
-@quiz_ns.route("/create-quiz")
+@quiz_ns.route("/create")
 class CreateQuiz(Resource):
     @quiz_ns.expect(models.Quiz.to_api_model())
     @api.doc(security='Bearer Auth')
@@ -74,7 +74,7 @@ class CreateQuiz(Resource):
         return make_response(jsonify({"message": "Quiz created."}), 201)
 
 
-@quiz_ns.route("/delete-quiz/<int:quiz_id>")
+@quiz_ns.route("/delete/<int:quiz_id>")
 class DeleteQuiz(Resource):
     @api.doc(security='Bearer Auth')
     def delete(self, quiz_id):

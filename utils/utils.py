@@ -17,8 +17,11 @@ def profile():
 @jwt_required()
 def get_quizzes() -> list:
     current_user = get_jwt_identity()
-    quizzes = Quiz.query.filter_by(user_id=current_user).all()
-    return [quiz.to_json() for quiz in quizzes]
+    try:
+        quizzes = Quiz.query.filter_by(user_id=current_user).all()
+        return [quiz.to_json() for quiz in quizzes]
+    except Exception as e:
+        raise Exception(f"An error occurred while getting quizzes: {e}")
 
 
 @jwt_required()
